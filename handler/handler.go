@@ -107,8 +107,6 @@ func (h *Handler) AccountBalance(w http.ResponseWriter, r *http.Request) {
 	accountVerification.AccountNumber = accountBalanceRequest.AccountNumber
 	accountVerification.ReferenceNumber = referenceNumber
 
-	fmt.Println(accountVerification)
-
 	accountVerificationBytes, err := json.Marshal(accountVerification)
 
 	if err != nil {
