@@ -3,17 +3,27 @@ package model
 import "time"
 
 type AccountVerificationRequest struct {
-	AccountNumber   string `json:"accountNumber"`
-	ReferenceNumber string `json:"referenceNumber"`
+	AccountNumber   string `json:"account_number"`
+	ReferenceNumber string `json:"reference_number"`
 }
 
 type AccountVerificationRespond struct {
-	CustomerNumber  string  `json:"customerNumber"`
-	NationalNumber  string  `json:"nationalNumber"`
-	AccountCurrency string  `json:"accountCurrency"`
-	AccountBalance  float64 `json:"accountBalance"`
-	CustomerName    string  `json:"customerName,omitempty"`
-	MobileNumber    string  `json:"mobileNumber,omitempty"`
+	ReferenceNumber    string `json:"reference_number"`
+	FullAccountNumber  string `json:"full_account_number"`
+	CustomerNumber     string `json:"customer_number"`
+	CustomerName       string `json:"customer_name"`
+	Gender             string `json:"gender"`
+	AccountType        string `json:"account_type"`
+	AccountStatus      string `json:"account_status"`
+	AccountBalance     string `json:"account_balance"`
+	AccountRestriction string `json:"account_restriction"`
+	AccountCurrency    string `json:"account_currency"`
+	AvailabalBalance   string `json:"available_balance"`
+	MobileNumber       string `json:"mobile_number"`
+	AccountEmail       string `json:"account_email"`
+	TotalBlockedFund   string `json:"total_blocked_fund"`
+	NationalNumber     string `json:"national_number"`
+	Message            string `json:"massager"`
 }
 
 type AccountBalanceRequest struct {
@@ -24,6 +34,8 @@ type AccountBalanceRequest struct {
 type AccountBalanceResponse struct {
 	AccountBalance float64 `json:"accountBalance"`
 	Currency       string  `json:"currency"`
+	AccountNumber  string  `json:"accountNumber"`
+	AccountName    string  `json:"accountName"`
 }
 
 type ErrorResponse struct {

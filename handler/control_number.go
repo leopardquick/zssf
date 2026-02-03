@@ -221,7 +221,7 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 	if userID == "" {
 		userID = r.Header.Get("X-User-Id")
 		if userID == "" {
-			userID = "unknown"
+			userID = "known"
 		}
 	}
 
@@ -269,23 +269,6 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 		cn.L.Error("user id is empty")
 		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, helper.GenerateReferenceNumber(), userID)
 		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusBadRequest, model.ErrorResponse{Error: "user id is empty"})
-		return
-	}
-
-	// get account from context value, from the middleware of auth
-	account, _ := r.Context().Value(accountKey).(string)
-
-	// check if account is empty
-	if account == "" {
-		cn.L.Error("account is empty")
-		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, helper.GenerateReferenceNumber(), userID)
-		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusBadRequest, model.ErrorResponse{Error: "account is empty"})
-		return
-	}
-
-	if cn.RequestLogs == nil {
-		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, helper.GenerateReferenceNumber(), userID)
-		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "request log store is not configured"})
 		return
 	}
 
