@@ -35,6 +35,7 @@ type AccountBalanceResponse struct {
 	AccountBalance float64 `json:"accountBalance"`
 	Currency       string  `json:"currency"`
 	AccountNumber  string  `json:"accountNumber"`
+	AccountName    string  `json:"accountName"`
 }
 
 type ErrorResponse struct {

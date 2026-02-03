@@ -228,6 +228,7 @@ func (h *Handler) AccountBalance(w http.ResponseWriter, r *http.Request) {
 		AccountBalance: balance,
 		Currency:       currency,
 		AccountNumber:  accountBalanceRequest.AccountNumber,
+		AccountName:    accountVerificationRespond.CustomerName,
 	}
 
 	respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusOK, accountBalance)
