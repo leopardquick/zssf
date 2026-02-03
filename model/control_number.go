@@ -2,7 +2,7 @@ package model
 
 type ApiRequestEnquire struct {
 	ControlNo string `json:"control_number"`
-	RequestID string `json:"-"`
+	RequestID string `json:"request_id"`
 }
 
 type EnquireRequest struct {
@@ -75,7 +75,7 @@ type PaymentRequestApi struct {
 	PSPReferenceID string `json:"pspReferenceId"`
 	CBFlag         string `json:"cbFlag"`
 	CLFlag         string `json:"clFlag"`
-	Pin            string `json:"pin"`
+	RequestID      string `json:"requestId"`
 }
 
 type ControlNumberPaymentResponse struct {

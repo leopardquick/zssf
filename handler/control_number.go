@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -90,7 +91,9 @@ func (cn *ControlNumberHandler) Enquire(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	apiRequestEnquire.RequestID = "PBZAPP" + fmt.Sprintf("%d", time.Now().UnixNano()) + "CN-" + apiRequestEnquire.ControlNo
+	if apiRequestEnquire.RequestID == "" {
+		apiRequestEnquire.RequestID = "PBZAPP" + fmt.Sprintf("%d", time.Now().UnixNano()) + "CN-" + apiRequestEnquire.ControlNo
+	}
 	// check if request id is empty
 
 	if apiRequestEnquire.RequestID == "" {
@@ -122,6 +125,20 @@ func (cn *ControlNumberHandler) Enquire(w http.ResponseWriter, r *http.Request) 
 	if cn.RequestLogs == nil {
 		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, apiRequestEnquire.RequestID, userID)
 		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "request log store is not configured"})
+		return
+	}
+
+	requestLog, err := cn.RequestLogs.GetByRequestID(r.Context(), apiRequestEnquire.RequestID)
+	if err != nil {
+		if !errors.Is(err, store.ErrRequestLogNotFound) {
+			cn.L.Error("error checking request log", err)
+			base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, apiRequestEnquire.RequestID, userID)
+			respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "failed to process request"})
+			return
+		}
+	} else if requestLog.RequestID != "" {
+		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, apiRequestEnquire.RequestID, userID)
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusConflict, model.ErrorResponse{Error: "request already used"})
 		return
 	}
 
@@ -284,7 +301,10 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 		},
 	)
 
-	requestId := "PBZAPP" + fmt.Sprintf("%d", time.Now().UnixNano())
+	requestId := apiPaymentRequest.RequestID
+	if requestId == "" {
+		requestId = "PBZAPP" + fmt.Sprintf("%d", time.Now().UnixNano())
+	}
 
 	// check if request id is empty
 
@@ -300,6 +320,20 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 		)
 		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
 		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "error generating security code"})
+		return
+	}
+
+	requestLog, err := cn.RequestLogs.GetByRequestID(r.Context(), requestId)
+	if err != nil {
+		if !errors.Is(err, store.ErrRequestLogNotFound) {
+			cn.L.Error("error checking request log", err)
+			base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
+			respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "failed to process request"})
+			return
+		}
+	} else if requestLog.RequestID != "" {
+		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusConflict, model.ErrorResponse{Error: "request already used"})
 		return
 	}
 
