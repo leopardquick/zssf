@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/leopardquick/zssf/helper"
 	"github.com/leopardquick/zssf/model"
@@ -105,6 +107,8 @@ func (h *Handler) AccountBalance(w http.ResponseWriter, r *http.Request) {
 	accountVerification.AccountNumber = accountBalanceRequest.AccountNumber
 	accountVerification.ReferenceNumber = referenceNumber
 
+	fmt.Println(accountVerification)
+
 	accountVerificationBytes, err := json.Marshal(accountVerification)
 
 	if err != nil {
@@ -202,12 +206,30 @@ func (h *Handler) AccountBalance(w http.ResponseWriter, r *http.Request) {
 	currency := "$ "
 
 	if accountVerificationRespond.AccountCurrency == "1 TZS" {
-		currency = "Tshs "
+		currency = "TZS "
+	}
+
+	// requires adding "strconv" and "strings" to imports
+	raw := strings.TrimSpace(accountVerificationRespond.AccountBalance)
+	raw = strings.ReplaceAll(raw, ",", "")
+	raw = strings.TrimPrefix(raw, "$")
+	raw = strings.TrimPrefix(raw, "Tshs")
+	raw = strings.TrimSpace(raw)
+
+	balance, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		go helper.InsertActivityLog(model.ActivityLog{
+			UserID:     userID,
+			LogMessage: "Account balance request failed to parse account balance error : " + err.Error(),
+		})
+		respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusInternalServerError, model.ErrorResponse{Error: "invalid account balance format"})
+		return
 	}
 
 	accountBalance := model.AccountBalanceResponse{
-		AccountBalance: accountVerificationRespond.AccountBalance,
+		AccountBalance: balance,
 		Currency:       currency,
+		AccountNumber:  accountBalanceRequest.AccountNumber,
 	}
 
 	respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusOK, accountBalance)

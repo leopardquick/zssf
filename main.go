@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	serverAddr     = ":8080"
+	serverAddr     = ":2080"
 	shutdownTimout = 10 * time.Second
 )
 
