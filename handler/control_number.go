@@ -264,14 +264,6 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 	// set CLFlag to 1 for service to charge customer directly
 	apiPaymentRequest.CLFlag = "1"
 
-	// check if user id is empty
-	if userID == "" || userID == "unknown" {
-		cn.L.Error("user id is empty")
-		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, helper.GenerateReferenceNumber(), userID)
-		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusBadRequest, model.ErrorResponse{Error: "user id is empty"})
-		return
-	}
-
 	// create a new db helper
 	helper := helper.NewDBHelper(nil, cn.db)
 
