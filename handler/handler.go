@@ -19,9 +19,10 @@ import (
 type Handler struct {
 	Client      *http.Client
 	RequestLogs store.RequestLogStore
+	Accounts    store.AccountStore
 }
 
-func New(client *http.Client, requestLogs store.RequestLogStore) *Handler {
+func New(client *http.Client, requestLogs store.RequestLogStore, accounts store.AccountStore) *Handler {
 	if client == nil {
 		client = http.DefaultClient
 	}
@@ -29,6 +30,7 @@ func New(client *http.Client, requestLogs store.RequestLogStore) *Handler {
 	return &Handler{
 		Client:      client,
 		RequestLogs: requestLogs,
+		Accounts:    accounts,
 	}
 }
 
@@ -98,6 +100,26 @@ func (h *Handler) AccountBalance(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if requestLog.RequestID != "" {
 		respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusConflict, model.ErrorResponse{Error: "request already used"})
+		return
+	}
+
+	if h.Accounts == nil {
+		respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusInternalServerError, model.ErrorResponse{Error: "account store is not configured"})
+		return
+	}
+
+	exists, err := h.Accounts.ExistsByAccountNumber(r.Context(), accountBalanceRequest.AccountNumber)
+	if err != nil {
+		go helper.InsertActivityLog(model.ActivityLog{
+			UserID:     userID,
+			LogMessage: "Account balance request failed to check account number error : " + err.Error(),
+		})
+		respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusInternalServerError, model.ErrorResponse{Error: "failed to process request"})
+		return
+	}
+
+	if !exists {
+		respondWithLog(h, w, r, buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestID, userID), http.StatusNotFound, model.ErrorResponse{Error: "account not listed in our records"})
 		return
 	}
 

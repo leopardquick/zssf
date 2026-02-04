@@ -52,8 +52,9 @@ func main() {
 	}
 
 	requestLogStore := store.NewSQLRequestLogStore(db)
-	apiHandler := handler.New(&http.Client{Timeout: 15 * time.Second}, requestLogStore)
-	controlNumberHandler := handler.NewControlNumberHandler(&http.Client{Timeout: 40 * time.Second}, requestLogStore)
+	accountStore := store.NewSQLAccountStore(db)
+	apiHandler := handler.New(&http.Client{Timeout: 15 * time.Second}, requestLogStore, accountStore)
+	controlNumberHandler := handler.NewControlNumberHandler(&http.Client{Timeout: 40 * time.Second}, requestLogStore, accountStore)
 
 	router.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

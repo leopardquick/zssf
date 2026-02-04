@@ -24,11 +24,12 @@ import (
 type ControlNumberHandler struct {
 	Client      *http.Client
 	RequestLogs store.RequestLogStore
+	Accounts    store.AccountStore
 	L           errorLogger
 	db          *sql.DB
 }
 
-func NewControlNumberHandler(client *http.Client, requestLogs store.RequestLogStore) *ControlNumberHandler {
+func NewControlNumberHandler(client *http.Client, requestLogs store.RequestLogStore, accounts store.AccountStore) *ControlNumberHandler {
 	if client == nil {
 		client = http.DefaultClient
 	}
@@ -36,6 +37,7 @@ func NewControlNumberHandler(client *http.Client, requestLogs store.RequestLogSt
 	return &ControlNumberHandler{
 		Client:      client,
 		RequestLogs: requestLogs,
+		Accounts:    accounts,
 		L:           stdErrorLogger{Logger: log.Default()},
 	}
 }
@@ -309,6 +311,32 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 	} else if requestLog.RequestID != "" {
 		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
 		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusConflict, model.ErrorResponse{Error: "request already used"})
+		return
+	}
+
+	if apiPaymentRequest.DebitAccount == "" {
+		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusBadRequest, model.ErrorResponse{Error: "debit account is required"})
+		return
+	}
+
+	if cn.Accounts == nil {
+		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "account store is not configured"})
+		return
+	}
+
+	exists, err := cn.Accounts.ExistsByAccountNumber(r.Context(), apiPaymentRequest.DebitAccount)
+	if err != nil {
+		cn.L.Error("error checking debit account", err)
+		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusInternalServerError, model.ErrorResponse{Error: "failed to process request"})
+		return
+	}
+
+	if !exists {
+		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusNotFound, model.ErrorResponse{Error: "account not found"})
 		return
 	}
 
