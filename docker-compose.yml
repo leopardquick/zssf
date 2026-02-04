@@ -1,0 +1,14 @@
+version: "3.4"
+
+services:
+  pbzapp:
+    image: zssf
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 2080:2080
+    deploy:
+      restart_policy:
+        condition: on-failure
+    restart: always    
