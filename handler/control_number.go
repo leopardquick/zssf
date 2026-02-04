@@ -336,7 +336,7 @@ func (cn *ControlNumberHandler) PaymentPost(w http.ResponseWriter, r *http.Reque
 
 	if !exists {
 		base := buildRequestLogBase(r, requestBodyJSON, requestHeadersJSON, requestId, userID)
-		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusNotFound, model.ErrorResponse{Error: "account not found"})
+		respondWithLog(&Handler{RequestLogs: cn.RequestLogs}, w, r, base, http.StatusNotFound, model.ErrorResponse{Error: "account not listed in our records"})
 		return
 	}
 
