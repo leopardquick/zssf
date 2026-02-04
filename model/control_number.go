@@ -75,7 +75,7 @@ type PaymentRequestApi struct {
 	PSPReferenceID string `json:"pspReferenceId"`
 	CBFlag         string `json:"cbFlag"`
 	CLFlag         string `json:"clFlag"`
-	RequestID      string `json:"requestId"`
+	RequestID      string `json:"request_id"`
 }
 
 type ControlNumberPaymentResponse struct {
